@@ -2,10 +2,10 @@
 
 #### 环境：mysql、mybatis、springboot 、tkmapper
 
-####1、通过MultiDataSourceConfig 创建多数据源
+#### 1、通过MultiDataSourceConfig 创建多数据源
 指定@Primary初始数据库，以防报错
 
-####2、通过RoutingDataSource 实现数据库路由
+#### 2、通过RoutingDataSource 实现数据库路由
 实现AbstractRoutingDataSource接口，determineCurrentLookupKey方法用来指定路由名称
 ```
     @Override
@@ -15,7 +15,7 @@
     }
 ```
 
-####3、通过MybatisConfig类，创建SqlSessionFactoryBean对象，加载路由数据，指定默认主数据
+#### 3、通过MybatisConfig类，创建SqlSessionFactoryBean对象，加载路由数据，指定默认主数据
 
 ```
     @Bean("routingDataSource")//必须 创建 bean
@@ -31,7 +31,7 @@
     }
 ```
 
-####4、实现mybatis拦截器，DateSourceSelectInterceptor
+#### 4、实现mybatis拦截器，DateSourceSelectInterceptor
 实现Interceptor接口：通过plugin方法过滤需要代理的对象；intercept为代理调用方法,事物方法使用master库，非事物方法
 根据类型，选择master或slave库
 
