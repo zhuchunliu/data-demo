@@ -1,5 +1,17 @@
 server:
-  port: 8080
+  port: 8081
+
+
+#spring:
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/bbs?characterEncoding=utf8&useSSL=true&serverTimezone=Hongkong
+#    username: root
+#    password: 123456
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    type: com.alibaba.druid.pool.DruidDataSource
+#  jpa:
+#    show-sql: true
+
 
 druid:
   master:
@@ -14,10 +26,6 @@ druid:
       password: 123456
       driver-class-name: com.mysql.cj.jdbc.Driver
       type: com.alibaba.druid.pool.DruidDataSource
-
-mapper:
-    mappers:
-        - com.person.demo.util.TkMapper
-    not-empty: false
-    identity: MYSQL
-
+spring:
+  jpa:
+    show-sql: true

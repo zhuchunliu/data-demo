@@ -52,3 +52,96 @@ factory.setMapperLocations(this.getResource("mapping", "**/*.xml"));
 factory.setConfigLocation(new ClassPathResource("config/mybatis-config.xml"));
 factory.setFailFast(true);
 ```
+
+## 项目 master-slave-jpa
+
+#### 1、通过MultiDataSourceConfig 创建多数据源 同master-salve项目
+
+#### 2、通过RoutingDataSource 实现数据库路由 同master-salve项目
+
+#### 3、通过JpaConfig类，创建LocalContainerEntityManagerFactoryBean对象，加载路由数据，指定默认主数据
+##### 方式一：
+```
+    @Bean
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder factory,
+                                                                       @Qualifier(value = "routingDataSource") DataSource dataSource,
+                                                                       JpaProperties properties) {
+        Map<String, Object> jpaProperties = new HashMap<String, Object>();
+        jpaProperties.putAll(properties.getHibernateProperties(dataSource));
+        return factory.dataSource(dataSource).packages("com.person.demo.entity").properties(jpaProperties).build();
+    }
+```
+
+##### 方式二：
+```
+    @Bean
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(@Qualifier(value = "routingDataSource") DataSource dataSource,
+                                                                       JpaVendorAdapter adapter) {
+        LocalContainerEntityManagerFactoryBean bean = new LocalContainerEntityManagerFactoryBean();
+        bean.setPackagesToScan("com.person.demo.entity");
+        bean.setDataSource(dataSource);
+        bean.setJpaVendorAdapter(adapter);
+        return bean;
+    }
+```
+
+#### 4、实现jpa处理器
+
+##### 4.1实现后处理器 ：过滤方法，如果是查询走slave库，如果是更新方法， 走master库
+```
+public class CustomPostProcessor implements RepositoryProxyPostProcessor {
+    @Override
+    public void postProcess(ProxyFactory proxyFactory, RepositoryInformation repositoryInformation) {
+        proxyFactory.addAdvice(new MethodInterceptor() {
+            @Override
+            public Object invoke(MethodInvocation invocation) throws Throwable {
+                Method method = invocation.getMethod();
+                DbContextHolder.DbType dbType = DbContextHolder.DbType.master;//默认设置使用主库
+                boolean synchonizationActive = TransactionSynchronizationManager.isSynchronizationActive();//判断当前操作是否有事务
+                if(!synchonizationActive){
+                    if(0 == method.getAnnotations().length){
+                        if(method.getName().startsWith("find") || method.getName().startsWith("get")){
+                            dbType = DbContextHolder.DbType.slave;
+                        }
+                    }else{
+                        if(null == method.getAnnotation(org.springframework.data.jpa.repository.Modifying.class)){
+                            dbType = DbContextHolder.DbType.slave;
+                        }
+                    }
+
+                }
+                System.err.println(method.getName()+(synchonizationActive?"开启事物":"无事物")+"  数据源："+dbType.name());
+
+
+                DbContextHolder.setDbType(dbType);
+                return invocation.proceed();
+            }
+        });
+    }
+}
+```
+
+##### 4.2加载处理器 ：继承JpaRepositoryFactoryBean，实现自定义FactoryBean，注入CustomPostProcessor自定义处理器
+```
+public class CustomJpaRepositoryFactoryBean <R extends JpaRepository<T, I>, T,
+        I extends Serializable> extends JpaRepositoryFactoryBean<R, T, I>{
+    public CustomJpaRepositoryFactoryBean(Class<? extends R> repositoryInterface) {
+        super(repositoryInterface);
+    }
+
+
+    protected RepositoryFactorySupport createRepositoryFactory(EntityManager entityManager) {
+        JpaRepositoryFactory jpaFac = new JpaRepositoryFactory(entityManager);
+        jpaFac.addRepositoryProxyPostProcessor(new CustomPostProcessor());
+        return jpaFac;
+    }
+}
+```
+
+#### 4.3 配置repositoryFactoryBeanClass，使repositoryFactoryBean生效
+```
+@Configuration
+@EnableJpaRepositories(basePackages="com.person.demo.repository",repositoryFactoryBeanClass = CustomJpaRepositoryFactoryBean.class)
+public class JpaConfig{
+}
+```
