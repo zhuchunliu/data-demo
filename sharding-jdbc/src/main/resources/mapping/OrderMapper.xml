@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.user//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.person.demo.dao.OrderMapper">
+
+    <select id="getAllOrder" resultType="com.person.demo.entity.Order">
+        select * from t_order
+    </select>
+
+    <insert id="insertOrder" >
+        INSERT INTO t_order (order_id,user_id, type)
+        VALUES (
+          #{orderId,jdbcType=INTEGER},#{userId,jdbcType=INTEGER},#{type,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <!-- 不配置useGeneratedKeys和keyProperty也可以，
+        但是properties中 sharding.jdbc.config.sharding.tables.t_order.key-generator-column-name属性必须设置-->
+    <insert id="insertOrderNullPrimaryKey" useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO t_order (user_id, type)
+        VALUES (
+        #{userId,jdbcType=INTEGER},#{type,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <update id="truncate">
+        truncate table t_order
+    </update>
+</mapper>

@@ -43,6 +43,7 @@ public class DateSourceSelectInterceptor implements Interceptor {
                 if (ms.getId().contains(SelectKeyGenerator.SELECT_KEY_SUFFIX)){
                     dbType = DbContextHolder.DbType.master;
                 }else {
+                    dbType = DbContextHolder.DbType.slave;
                     //此段代码没有发现意义
 //                    BoundSql boundSql = ms.getSqlSource().getBoundSql(objects[1]);
 //                    String sql = boundSql.getSql().toLowerCase(Locale.CHINA).replace("[\\t\\n\\r]"," ");
@@ -51,6 +52,7 @@ public class DateSourceSelectInterceptor implements Interceptor {
 //                    }else {
 //                        //使用从库
 //                        dbType = DbContextHolder.DbType.slave;
+
 //                    }
                 }
             }
@@ -72,6 +74,5 @@ public class DateSourceSelectInterceptor implements Interceptor {
 
     @Override
     public void setProperties(Properties properties) {
-
     }
 }

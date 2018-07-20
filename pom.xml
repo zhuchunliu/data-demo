@@ -11,6 +11,7 @@
     <modules>
         <module>master-slave</module>
         <module>master-slave-jpa</module>
+        <module>sharding-jdbc</module>
     </modules>
 
     <properties>
